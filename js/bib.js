@@ -1,95 +1,105 @@
 fetch("publications.bib")
+
 .then(response => response.text())
+
 .then(text => {
 
-    let papers = bibtexParse.toJSON(text);
 
-    let html = "";
-
-
-    papers.forEach(function(item){
+let papers = bibtexParse.toJSON(text);
 
 
-        let p = item.entry;
+let html = "";
 
 
-        html += `
-        <div class="publication">
-
-        <h2>
-        ${p.title || "Untitled"}
-        </h2>
+papers.forEach(function(item){
 
 
-        <p>
-        ${p.author || ""}
-        </p>
-
-
-        <p>
-        <i>
-        ${p.booktitle || p.journal || ""}
-        ${p.year || ""}
-        </i>
-        </p>
-
-        `;
+let p = item.entry;
 
 
 
-        if(p.pdf){
+html += `
 
-            html += `
-            <a href="${p.pdf}">
-            📄 PDF
-            </a>
-            `;
+<div class="publication">
 
-        }
+<h2>
+${p.title}
+</h2>
 
 
-        if(p.arxiv){
-
-            html += `
-            <a href="${p.arxiv}">
-            arXiv
-            </a>
-            `;
-
-        }
+<p>
+${p.author}
+</p>
 
 
+<p>
+<i>
+${p.booktitle || p.journal || ""}
+${p.year}
+</i>
+</p>
 
-        if(p.code){
-
-            html += `
-            <a href="${p.code}">
-            💻 Code
-            </a>
-            `;
-
-        }
+`;
 
 
-        html += `
 
-        </div>
+if(p.pdf){
 
-        `;
+html += `
+<a href="${p.pdf}">
+📄 PDF
+</a>
+`;
+
+}
 
 
-    });
+
+if(p.arxiv){
+
+html += `
+<a href="${p.arxiv}">
+arXiv
+</a>
+`;
+
+}
 
 
-    document.getElementById("pubs").innerHTML = html;
+
+if(p.code){
+
+html += `
+<a href="${p.code}">
+💻 Code
+</a>
+`;
+
+}
+
+
+html += `
+
+</div>
+
+`;
+
+
+
+});
+
+
+document.getElementById("pubs").innerHTML = html;
+
 
 
 })
+
 .catch(error=>{
 
-console.error(error);
+console.log(error);
 
 document.getElementById("pubs").innerHTML =
-"Failed to load publications.";
+"Failed to load publications";
 
 });
