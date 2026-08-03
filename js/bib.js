@@ -1,105 +1,83 @@
-fetch("publications.bib")
+fetch("./publications.bib")
+.then(response => {
 
-.then(response => response.text())
+    if (!response.ok) {
+        throw new Error("Cannot load publications.bib");
+    }
 
+    return response.text();
+
+})
 .then(text => {
 
 
-let papers = bibtexParse.toJSON(text);
+    let papers = text.split("@")
+        .filter(x => x.trim().length > 0);
 
 
-let html = "";
+    let html = "";
 
 
-papers.forEach(function(item){
+    papers.forEach(item => {
 
 
-let p = item.entry;
+        let title =
+            item.match(/title=\{([^}]*)\}/i);
 
 
-
-html += `
-
-<div class="publication">
-
-<h2>
-${p.title}
-</h2>
+        let author =
+            item.match(/author=\{([^}]*)\}/i);
 
 
-<p>
-${p.author}
-</p>
+        let venue =
+            item.match(/booktitle=\{([^}]*)\}|journal=\{([^}]*)\}/i);
 
 
-<p>
-<i>
-${p.booktitle || p.journal || ""}
-${p.year}
-</i>
-</p>
-
-`;
+        let year =
+            item.match(/year=\{([^}]*)\}/i);
 
 
 
-if(p.pdf){
+        html += `
 
-html += `
-<a href="${p.pdf}">
-📄 PDF
-</a>
-`;
+        <div class="publication">
 
-}
+        <h2>
+        ${title ? title[1] : ""}
+        </h2>
 
 
-
-if(p.arxiv){
-
-html += `
-<a href="${p.arxiv}">
-arXiv
-</a>
-`;
-
-}
+        <p>
+        ${author ? author[1] : ""}
+        </p>
 
 
-
-if(p.code){
-
-html += `
-<a href="${p.code}">
-💻 Code
-</a>
-`;
-
-}
+        <p>
+        ${venue ? (venue[1] || venue[2]) : ""}
+        ${year ? year[1] : ""}
+        </p>
 
 
-html += `
+        </div>
 
-</div>
-
-`;
+        `;
 
 
+    });
 
-});
 
-
-document.getElementById("pubs").innerHTML = html;
-
+    document.getElementById("pubs").innerHTML = html;
 
 
 })
-
 .catch(error=>{
 
-console.log(error);
+
+console.error(error);
+
 
 document.getElementById("pubs").innerHTML =
 "Failed to load publications";
+
 
 });
