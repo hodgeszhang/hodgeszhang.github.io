@@ -1,82 +1,170 @@
 fetch("./publications.bib")
-.then(response => {
 
-    if (!response.ok) {
-        throw new Error("Cannot load publications.bib");
+.then(res => {
+
+    if(!res.ok){
+
+        throw new Error(
+        "Cannot load publications.bib"
+        );
+
     }
 
-    return response.text();
+    return res.text();
 
 })
-.then(text => {
 
 
-    let papers = text.split("@")
-        .filter(x => x.trim().length > 0);
+.then(data=>{
 
 
-    let html = "";
-
-
-    papers.forEach(item => {
-
-
-        let title =
-            item.match(/title=\{([^}]*)\}/i);
-
-
-        let author =
-            item.match(/author=\{([^}]*)\}/i);
-
-
-        let venue =
-            item.match(/booktitle=\{([^}]*)\}|journal=\{([^}]*)\}/i);
-
-
-        let year =
-            item.match(/year=\{([^}]*)\}/i);
+let papers =
+data.split("@")
+.filter(x=>x.trim());
 
 
 
-        html += `
-
-        <div class="publication">
-
-        <h2>
-        ${title ? title[1] : ""}
-        </h2>
+let html="";
 
 
-        <p>
-        ${author ? author[1] : ""}
-        </p>
+
+papers.forEach(paper=>{
 
 
-        <p>
-        ${venue ? (venue[1] || venue[2]) : ""}
-        ${year ? year[1] : ""}
-        </p>
+function getField(name){
+
+let reg =
+new RegExp(
+name+"=\\{([^}]*)\\}",
+"i"
+);
 
 
-        </div>
-
-        `;
-
-
-    });
+let result =
+paper.match(reg);
 
 
-    document.getElementById("pubs").innerHTML = html;
+return result ? result[1] : "";
+
+}
+
+
+
+let title =
+getField("title");
+
+
+let author =
+getField("author");
+
+
+let venue =
+getField("booktitle") ||
+getField("journal");
+
+
+let year =
+getField("year");
+
+
+let pdf =
+getField("pdf");
+
+
+let code =
+getField("code");
+
+
+let arxiv =
+getField("arxiv");
+
+
+
+html += `
+
+
+<div class="publication">
+
+
+<h2>
+${title}
+</h2>
+
+
+<p>
+${author}
+</p>
+
+
+<p>
+<i>
+${venue}
+${year}
+</i>
+</p>
+
+
+
+<div>
+
+
+${pdf ?
+`<a href="${pdf}">
+📄 PDF
+</a>`
+:""}
+
+
+
+${arxiv ?
+`<a href="${arxiv}">
+arXiv
+</a>`
+:""}
+
+
+
+${code ?
+`<a href="${code}">
+💻 Code
+</a>`
+:""}
+
+
+
+</div>
+
+
+</div>
+
+
+`;
+
+
+
+});
+
+
+
+document
+.getElementById("pubs")
+.innerHTML=html;
+
 
 
 })
-.catch(error=>{
 
 
-console.error(error);
+
+.catch(err=>{
 
 
-document.getElementById("pubs").innerHTML =
+console.error(err);
+
+
+document
+.getElementById("pubs")
+.innerHTML=
 "Failed to load publications";
 
 
