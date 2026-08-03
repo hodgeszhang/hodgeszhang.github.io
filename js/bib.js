@@ -6,7 +6,8 @@ function escapeHTML(str) {
 
 function parseBib(text) {
     const entries = [];
-    const chunks = text.split(/\n(?=@)/).filter(s => s.trim().startsWith("@"));
+    const chunks = text.match(/@[a-zA-Z]+\\s*\\{[\\s\\S]*?(?=\\n@|$)/g) || [];
+    
     chunks.forEach(chunk => {
         const fields = {};
         const body = chunk.substring(chunk.indexOf("{")+1);
@@ -41,7 +42,7 @@ fetch("publications.bib")
 
         html += `
         <div class="publication">
-          <h2>${escapeHTML(p.title)}</h2>
+          <div class="pub-title">${escapeHTML(p.title)}</div>
           <p><i>${escapeHTML(p.journal || p.booktitle || p.venue || "")} ${escapeHTML(p.year || "")}</i></p>
           <p>${links.join(" &nbsp; ")}</p>
         </div>`;
