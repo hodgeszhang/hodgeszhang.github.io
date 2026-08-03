@@ -109,7 +109,7 @@ margin-right:5px;
 }
 .pub-title {
     font-size: 20px;
-    line-height: 1.5;
+    /* line-height: 1.5; */
 }
 .pub-venue {
     color: #666;
