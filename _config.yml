@@ -1,0 +1,39 @@
+title: "Zhang Hongjie"
+name: "Zhang Hongjie"
+description: "Ph.D. in Computer Science and Technology at Nanjing University. Research interests include Multimodal Large Language Models and Unified Understanding-Generation Models."
+
+url: "https://hodgeszhang.github.io"
+baseurl: ""
+
+repository: "hodgeszhang/hodgeszhang.github.io"
+
+remote_theme: "academicpages/academicpages.github.io@master"
+
+plugins:
+  - jekyll-remote-theme
+  - jekyll-scholar
+  - jekyll-seo-tag
+
+author:
+  name: "Zhang Hongjie"
+  avatar: "/images/profile.jpg"
+  bio: "Ph.D. Researcher at Nanjing University. Research on Multimodal Large Language Models and Unified Understanding-Generation Models."
+  location: "Nanjing University"
+
+  links:
+    - label: "Google Scholar"
+      icon: "fas fa-graduation-cap"
+      url: "https://scholar.google.com/citations?user=Zl_2sZYAAAAJ&hl=en"
+    - label: "GitHub"
+      icon: "fab fa-github"
+      url: "https://github.com/hodgeszhang"
+    - label: "Email"
+      icon: "fas fa-envelope"
+      url: "mailto:your_email@nju.edu.cn"
+
+scholar:
+  style: apa
+  locale: en
+  bibliography: papers
+  sort_by: year
+  order: descending
