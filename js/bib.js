@@ -1,57 +1,56 @@
-function escapeHTML(str) {
-    return (str || "").replace(/[&<>"']/g, c => ({
-        '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'
-    }[c]));
-}
+fetch('publications.bib')
+    .then(response => response.text())
+    .then(data => {
 
-function parseBib(text) {
-    const entries = [];
-    const chunks = text.match(/@[a-zA-Z]+\\s*\\{[\\s\\S]*?(?=\\n@|$)/g) || [];
-    
-    chunks.forEach(chunk => {
-        const fields = {};
-        const body = chunk.substring(chunk.indexOf("{")+1);
-        const regex = /([a-zA-Z][a-zA-Z0-9_-]*)\s*=\s*(\{(?:[^{}]|\{[^{}]*\})*\}|"[^"]*")/g;
-        let m;
-        while ((m = regex.exec(body))) {
-            let value = m[2].trim();
-            if ((value.startsWith("{") && value.endsWith("}")) ||
-                (value.startsWith('"') && value.endsWith('"'))) {
-                value = value.slice(1,-1);
-            }
-            fields[m[1].toLowerCase()] = value.replace(/\s+/g," ").trim();
+        const entries = data.match(
+            /@\w+\s*\{[\s\S]*?(?=\n@\w+\s*\{|$)/g
+        );
+
+        if (!entries) {
+            document.getElementById("publications").innerHTML =
+                "No publications found. Please check publications.bib.";
+            return;
         }
-        entries.push(fields);
+
+        let html = "";
+
+        entries.forEach(entry => {
+
+            let title = entry.match(
+                /title\s*=\s*\{([\s\S]*?)\}/i
+            );
+
+            let year = entry.match(
+                /year\s*=\s*\{(.*?)\}/i
+            );
+
+            let author = entry.match(
+                /author\s*=\s*\{([\s\S]*?)\}/i
+            );
+
+            html += `
+            <div class="publication">
+                <div class="pub-title">
+                    ${title ? title[1] : ""}
+                </div>
+
+                <div class="pub-author">
+                    ${author ? author[1] : ""}
+                </div>
+
+                <div class="pub-year">
+                    ${year ? year[1] : ""}
+                </div>
+            </div>
+            `;
+        });
+
+
+        document.getElementById("publications").innerHTML = html;
+
+    })
+    .catch(error => {
+        console.error(error);
+        document.getElementById("publications").innerHTML =
+        "Failed to load publications.bib";
     });
-    return entries;
-}
-
-fetch("publications.bib")
-.then(r => {
-    if (!r.ok) throw new Error("publications.bib cannot be loaded");
-    return r.text();
-})
-.then(text => {
-    const pubs = parseBib(text).filter(p => p.title);
-    let html = "";
-
-    pubs.forEach(p => {
-        const links = [];
-        if (p.pdf) links.push(`<a href="${escapeHTML(p.pdf)}" target="_blank">📄 PDF</a>`);
-        if (p.code || p.github) links.push(`<a href="${escapeHTML(p.code || p.github)}" target="_blank">💻 Code</a>`);
-
-        html += `
-        <div class="publication">
-          <div class="pub-title">${escapeHTML(p.title)}</div>
-          <p><i>${escapeHTML(p.journal || p.booktitle || p.venue || "")} ${escapeHTML(p.year || "")}</i></p>
-          <p>${links.join(" &nbsp; ")}</p>
-        </div>`;
-    });
-
-    document.getElementById("pubs").innerHTML =
-        html || "<p>No publications found. Please check publications.bib.</p>";
-})
-.catch(e => {
-    document.getElementById("pubs").innerHTML = 
-        "<p>Failed to load publications: " + escapeHTML(e.message) + "</p>";
-});
