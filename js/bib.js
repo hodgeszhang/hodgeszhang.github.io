@@ -1,270 +1,59 @@
-/*
- * Academic Publication Renderer
- * For hodgeszhang.github.io
- *
- * Features:
- * - Parse BibTeX
- * - Hide author
- * - Hide arXiv link
- * - Show PDF / Code / Project
- * - Sort by year descending
- */
 
-
-async function loadBib() {
-
-    const response = await fetch("publications.bib");
-
-    const bibText = await response.text();
-
-    const papers = parseBibtex(bibText);
-
-
-    // newest first
-    papers.sort((a,b)=>{
-        return parseInt(b.year || 0) - parseInt(a.year || 0);
-    });
-
-
-    renderPublications(papers);
-
+function escapeHTML(str) {
+    return (str || "").replace(/[&<>"']/g, c => ({
+        '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'
+    }[c]));
 }
 
-
-
-/*
- Simple BibTeX parser
- Supports multiline {...}
-*/
-
-
-function parseBibtex(text){
-
-    let entries = [];
-
-    let regex = /@(\w+)\s*\{\s*([^,]+),([\s\S]*?)\n\}/g;
-
-
-    let match;
-
-
-    while((match = regex.exec(text)) !== null){
-
-
-        let type = match[1];
-
-        let key = match[2];
-
-        let body = match[3];
-
-
-        let paper = {
-
-            type:type,
-            key:key
-
-        };
-
-
-        let fieldRegex =
-        /(\w+)\s*=\s*(\{([\s\S]*?)\}|\"([\s\S]*?)\")\s*,?/g;
-
-
-        let field;
-
-
-        while((field = fieldRegex.exec(body)) !== null){
-
-            let name =
-            field[1].toLowerCase();
-
-
-            let value =
-            field[3] || field[4] || "";
-
-
-            value =
-            cleanLatex(value);
-
-
-            paper[name]=value;
-
+function parseBib(text) {
+    const entries = [];
+    const chunks = text.split(/\n(?=@)/).filter(s => s.trim().startsWith("@"));
+    chunks.forEach(chunk => {
+        const fields = {};
+        const body = chunk.substring(chunk.indexOf("{")+1);
+        const regex = /([a-zA-Z][a-zA-Z0-9_-]*)\s*=\s*(\{(?:[^{}]|\{[^{}]*\})*\}|"[^"]*")/g;
+        let m;
+        while ((m = regex.exec(body))) {
+            let value = m[2].trim();
+            if ((value.startsWith("{") && value.endsWith("}")) ||
+                (value.startsWith('"') && value.endsWith('"'))) {
+                value = value.slice(1,-1);
+            }
+            fields[m[1].toLowerCase()] = value.replace(/\s+/g," ").trim();
         }
-
-
-        entries.push(paper);
-
-    }
-
-
+        entries.push(fields);
+    });
     return entries;
-
 }
 
+fetch("publications.bib")
+.then(r => {
+    if (!r.ok) throw new Error("publications.bib cannot be loaded");
+    return r.text();
+})
+.then(text => {
+    const pubs = parseBib(text).filter(p => p.title);
+    let html = "";
 
-
-
-/*
- Remove LaTeX commands
-*/
-
-function cleanLatex(str){
-
-
-    return str
-
-    .replace(/\\&/g,"&")
-
-    .replace(/\{|\}/g,"")
-
-    .replace(/\\textbf\{(.*?)\}/g,"$1")
-
-    .replace(/\\emph\{(.*?)\}/g,"$1")
-
-    .trim();
-
-}
-
-
-
-
-
-function renderPublications(papers){
-
-
-    const container =
-    document.getElementById(
-        "publications"
-    );
-
-
-    if(!container){
-
-        console.error(
-        "Cannot find #publications"
-        );
-
-        return;
-
-    }
-
-
-    let html="";
-
-
-    papers.forEach(p=>{
-
-
-        let venue =
-        p.journal ||
-        p.booktitle ||
-        p.publisher ||
-        "arXiv";
-
+    pubs.forEach(p => {
+        const links = [];
+        if (p.pdf) links.push(`<a href="${escapeHTML(p.pdf)}" target="_blank">📄 PDF</a>`);
+        if (p.arxiv) links.push(`<a href="${escapeHTML(p.arxiv)}" target="_blank">arXiv</a>`);
+        if (p.code || p.github) links.push(`<a href="${escapeHTML(p.code || p.github)}" target="_blank">💻 Code</a>`);
 
         html += `
-
-
-<div class="publication">
-
-
-<h3>
-${p.title || "Untitled"}
-</h3>
-
-
-
-<p class="venue">
-
-${venue}
-
-${p.year ? " " + p.year : ""}
-
-</p>
-
-
-
-<div class="links">
-
-
-${p.pdf ? `
-
-<a href="${p.pdf}"
-target="_blank">
-
-📄 PDF
-
-</a>
-
-` : ""}
-
-
-
-${p.code ? `
-
-<a href="${p.code}"
-target="_blank">
-
-💻 Code
-
-</a>
-
-` : ""}
-
-
-
-${p.github ? `
-
-<a href="${p.github}"
-target="_blank">
-
-💻 GitHub
-
-</a>
-
-` : ""}
-
-
-
-${p.project ? `
-
-<a href="${p.project}"
-target="_blank">
-
-🌐 Project
-
-</a>
-
-` : ""}
-
-
-
-</div>
-
-
-</div>
-
-
-
-`;
-
-
-
+        <div class="publication">
+          <h2>${escapeHTML(p.title)}</h2>
+          <p>${escapeHTML(p.author || "")}</p>
+          <p><i>${escapeHTML(p.journal || p.booktitle || p.venue || "")} ${escapeHTML(p.year || "")}</i></p>
+          <p>${links.join(" &nbsp; ")}</p>
+        </div>`;
     });
 
-
-
-    container.innerHTML = html;
-
-
-}
-
-
-
-
-// start
-
-document.addEventListener(
-"DOMContentLoaded",
-loadBib
-);
+    document.getElementById("pubs").innerHTML =
+        html || "<p>No publications found. Please check publications.bib.</p>";
+})
+.catch(e => {
+    document.getElementById("pubs").innerHTML = 
+        "<p>Failed to load publications: " + escapeHTML(e.message) + "</p>";
+});
