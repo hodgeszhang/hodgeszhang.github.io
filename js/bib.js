@@ -1,58 +1,267 @@
 async function loadPublications() {
-    const container = document.getElementById("pubs");
 
-    try {
-        const response = await fetch("publications.bib");
-        if (!response.ok) {
-            throw new Error("Cannot load publications.bib");
-        }
 
-        const bib = await response.text();
+const container = document.getElementById("pubs");
 
-        // Split BibTeX entries robustly
-        const entries = bib.match(/@\w+\s*\{[\s\S]*?(?=\n@\w+\s*\{|$)/g);
 
-        if (!entries || entries.length === 0) {
-            container.innerHTML = "No publications found. Please check publications.bib.";
-            return;
-        }
+try {
 
-        let html = "";
 
-        entries.forEach(entry => {
-            const getField = (name) => {
-                const match = entry.match(
-                    new RegExp(name + "\\s*=\\s*(?:\\{([\\s\\S]*?)\\}|([^,\\n]+))", "i")
-                );
-                return match ? (match[1] || match[2]).trim() : "";
-            };
+const response = await fetch("publications.bib");
 
-            const title = getField("title");
-            const author = getField("author");
-            const journal = getField("journal");
-            const year = getField("year");
-            const pdf = getField("pdf");
-            const code = getField("code");
 
-            html += `
-            <div class="publication">
-                <div class="pub-title">${title}</div>
-                <div class="pub-author">${author}</div>
-                <div class="pub-venue">${journal}</div>
-                <div class="pub-year">${year}</div>
-                ${pdf ? `<div><a href="${pdf}" target="_blank">PDF</a></div>` : ""}
-                ${code ? `<div><a href="${code}" target="_blank">Code</a></div>` : ""}
-            </div>
-            <hr>
-            `;
-        });
+const bib = await response.text();
 
-        container.innerHTML = html;
 
-    } catch (error) {
-        console.error(error);
-        container.innerHTML = "Failed to load publications.bib";
-    }
+
+/*
+ Extract BibTeX entries
+*/
+
+const entries = bib.match(
+/@\w+\s*\{[\s\S]*?(?=\n@\w+\s*\{|$)/g
+);
+
+
+
+if(!entries){
+
+container.innerHTML =
+"No publications found.";
+
+return;
+
 }
+
+
+
+/*
+ Parse fields
+*/
+
+function getField(entry, field){
+
+
+let reg = new RegExp(
+field +
+"\\s*=\\s*\\{([\\s\\S]*?)\\}",
+"i"
+);
+
+
+let match = entry.match(reg);
+
+
+if(match)
+return match[1]
+.replace(/\n/g," ")
+.trim();
+
+
+return "";
+
+}
+
+
+
+let publications = [];
+
+
+
+entries.forEach(entry=>{
+
+
+let title =
+getField(entry,"title");
+
+
+let journal =
+getField(entry,"journal");
+
+
+let year =
+getField(entry,"year");
+
+
+let pdf =
+getField(entry,"pdf");
+
+
+let code =
+getField(entry,"code");
+
+
+
+publications.push({
+
+title,
+journal,
+year,
+pdf,
+code
+
+});
+
+
+});
+
+
+
+/*
+ Sort by year descending
+*/
+
+publications.sort(
+(a,b)=>
+parseInt(b.year)-parseInt(a.year)
+);
+
+
+
+/*
+ Group by year
+*/
+
+
+let groups={};
+
+
+publications.forEach(pub=>{
+
+
+if(!groups[pub.year])
+groups[pub.year]=[];
+
+
+groups[pub.year].push(pub);
+
+
+});
+
+
+
+
+let html="";
+
+
+
+Object.keys(groups)
+.sort((a,b)=>b-a)
+.forEach(year=>{
+
+
+
+html += `
+
+<div class="year-section">
+
+<h2>${year}</h2>
+
+`;
+
+
+
+groups[year].forEach(pub=>{
+
+
+html += `
+
+<div class="publication">
+
+
+<div class="title">
+
+${pub.title}
+
+</div>
+
+
+<div class="venue">
+
+${pub.journal}
+
+</div>
+
+
+<div class="links">
+
+
+${
+pub.pdf
+?
+`
+<a class="link"
+href="${pub.pdf}"
+target="_blank">
+
+<span>📄</span>
+PDF
+
+</a>
+`
+:""
+}
+
+
+
+${
+pub.code
+?
+`
+<a class="link"
+href="${pub.code}"
+target="_blank">
+
+<span>💻</span>
+Code
+
+</a>
+`
+:""
+}
+
+
+
+</div>
+
+
+
+</div>
+
+`;
+
+});
+
+
+html += "</div>";
+
+
+});
+
+
+
+container.innerHTML=html;
+
+
+
+}
+
+catch(error){
+
+
+console.error(error);
+
+
+container.innerHTML =
+"Failed to load publications.bib";
+
+
+}
+
+
+
+}
+
+
 
 loadPublications();
