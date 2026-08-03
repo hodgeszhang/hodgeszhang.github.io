@@ -1,4 +1,3 @@
-
 function escapeHTML(str) {
     return (str || "").replace(/[&<>"']/g, c => ({
         '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'
@@ -38,13 +37,11 @@ fetch("publications.bib")
     pubs.forEach(p => {
         const links = [];
         if (p.pdf) links.push(`<a href="${escapeHTML(p.pdf)}" target="_blank">📄 PDF</a>`);
-        if (p.arxiv) links.push(`<a href="${escapeHTML(p.arxiv)}" target="_blank">arXiv</a>`);
         if (p.code || p.github) links.push(`<a href="${escapeHTML(p.code || p.github)}" target="_blank">💻 Code</a>`);
 
         html += `
         <div class="publication">
           <h2>${escapeHTML(p.title)}</h2>
-          <p>${escapeHTML(p.author || "")}</p>
           <p><i>${escapeHTML(p.journal || p.booktitle || p.venue || "")} ${escapeHTML(p.year || "")}</i></p>
           <p>${links.join(" &nbsp; ")}</p>
         </div>`;
