@@ -1,0 +1,1 @@
+fetch('publications.bib').then(r=>r.text()).then(t=>{let p=bibtexParse.toJSON(t);let h='';p.forEach(x=>{let e=x.entry;h+=`<h2>${e.title}</h2><p>${e.author}<br>${e.booktitle||''} ${e.year}</p>`;if(e.pdf)h+=`<a href='${e.pdf}'>PDF</a>`;if(e.arxiv)h+=`<a href='${e.arxiv}'>arXiv</a>`;if(e.code)h+=`<a href='${e.code}'>Code</a>`;});document.getElementById('pubs').innerHTML=h;});
