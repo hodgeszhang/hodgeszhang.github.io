@@ -1,4 +1,4 @@
-fetch("./publications.bib")
+fetch(""https://raw.githubusercontent.com/hodgeszhang/hodgeszhang.github.io/main/publications.bib"")
 
 .then(res => {
 
